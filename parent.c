@@ -1,13 +1,24 @@
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <time.h>
+
+void signal_catcher1(int);
 
 int main(int argc, char *argv[])
 {
 
     int i, status;
     pid_t pid, pid_array[3];
+
+    if (sigset(SIGINT, signal_catcher1) == SIG_ERR)
+    {
+        perror("Sigset can not set SIGQUIT");
+        exit(SIGQUIT);
+    }
 
     printf("My process ID is %d\n", getpid());
 
@@ -47,4 +58,9 @@ int main(int argc, char *argv[])
     pause();
 
     return 0;
+}
+
+void signal_catcher1(int the_sig)
+{
+    printf("Youpiiiiiiiii!\n");
 }
