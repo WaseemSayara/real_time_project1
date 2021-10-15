@@ -6,21 +6,27 @@
 
 int main(int argc, char *argv[])
 {
+    int i, childNumber;
+    long t;
+    FILE *ptr;
 
+    childNumber = atoi(argv[0]);
 
-    printf("0 = %s , 1 = %s \n", argv[0], argv[1]);
-    int x = atoi(argv[0]);
-
-    int i;
-
-    long t = time(NULL) * x;
-    printf("time from chid %d = %ld\n",x, t);
+    t = time(NULL) * childNumber;
+    printf("time from chid %d = %ld\n", childNumber, t);
     srand(t);
-    for (i = 0 ; i<10; i++){
-        printf("random %d from child %d = %d\n",i,x, (rand() % 100) + 1);
 
+    char filename[30] = "./child";
+    strcat(filename, argv[0]);
+    strcat(filename, ".txt");
+    printf("%s\n", filename);
+
+    ptr = fopen(filename, "w+");
+
+    for (i = 0; i < 10; i++)
+    {
+        fprintf(ptr, "%d\n", (rand() % 100) + 1);
     }
-
 
     return 0;
 }
