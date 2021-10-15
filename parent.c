@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <time.h>
 
-void signal_catcher1(int);
+void signal_catcher(int);
 
 int main(int argc, char *argv[])
 {
@@ -14,13 +14,19 @@ int main(int argc, char *argv[])
     int i, status;
     pid_t pid, pid_array[3];
 
-    if (sigset(SIGINT, signal_catcher1) == SIG_ERR)
+    if (sigset(SIGINT, signal_catcher) == SIG_ERR)
     {
         perror("Sigset can not set SIGQUIT");
         exit(SIGQUIT);
     }
 
+    if ( sigset(SIGQUIT, signal_catcher) == SIG_ERR ) {
+    perror("Sigset can not set SIGQUIT");
+    exit(SIGQUIT);
+  }
+
     printf("My process ID is %d\n", getpid());
+    
 
     for (i = 0; i < 3; i++)
     {
@@ -57,10 +63,19 @@ int main(int argc, char *argv[])
 
     pause();
 
+for ( i = 0; i < 3; i++ ) {
+      if (waitpid(pid_array[i], &status, 0) == pid_array[i]) {
+	printf("Process ID %d has terminated\t status = %d\n", pid_array[i], status);
+      }
+
     return 0;
 }
+}
 
-void signal_catcher1(int the_sig)
+void signal_catcher(int the_sig)
 {
-    printf("Youpiiiiiiiii!\n");
+  printf("SIGINT received");
+  
+  if ( the_sig == SIGQUIT )
+    exit(1);
 }

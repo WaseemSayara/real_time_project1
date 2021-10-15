@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
         fprintf(ptr, "%d\n", (rand() % 100) + 1);
     }
     
-    sleep(childNumber);
     kill(getppid(), SIGINT);
 
     return 0;
