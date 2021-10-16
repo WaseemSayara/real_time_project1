@@ -77,8 +77,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    while (1)
+    while (BigScore1 < 50 && BigScore2 < 50)
     {
+        sleep(1);
+        kill(pid_array[1], SIGUSR1);
+        kill(pid_array[2], SIGUSR1);
         if (ready == 2)
         {
             ready = 0;
@@ -107,9 +110,7 @@ int main(int argc, char *argv[])
                         BigScore1++;
                         BigScore2++;
                     }
-
-                    
-
+                    printf("BigScore1= %d, BigScore2= %d\n", BigScore1, BigScore2);
                 }
             }
             else
@@ -117,14 +118,19 @@ int main(int argc, char *argv[])
                 perror("Write");
                 exit(5);
             }
-
-            break;
         }
         else
         {
             pause();
         }
     }
+
+    if (BigScore1 > BigScore2)
+        printf("Child 1 Wins!\n");
+    else if (BigScore1 < BigScore2)
+        printf("Child 2 Wins!\n");
+    else
+        printf("Draw!\n");
 
     for (i = 0; i < 3; i++)
     {

@@ -16,61 +16,75 @@ int main(int argc, char *argv[])
 
     int pipe_read = atoi(argv[0]);
     int pipe_write = atoi(argv[1]);
+
+    char File1Name[10];
+    char File2Name[10];
+
+    FILE *file1;
+    FILE *file2;
     printf("0 = %s , 1 = %s \n", argv[0], argv[1]);
-    if (read(pipe_read, message, BUFSIZ) != -1)
+
+    while (1)
     {
-        printf("Message received by child: [%s]\n", message);
-        fflush(stdout);
-
-        char *token = strtok(message, "-");
-        FILE *file1 = fopen(token, "r");
-        token = strtok(NULL, "-");
-        FILE *file2 = fopen(token, "r");
-        if (file1 == NULL || file2 == NULL)
+        if (read(pipe_read, message, BUFSIZ) != -1)
         {
-            perror("Can't open a file!");
-            return;
-        }
-        int temp1, temp2;
-        int counter1 = 0;
-        int counter2 = 0;
-        for (int i = 0; i < 10; i++)
-        {
-
-            fscanf(file1, "%d\n", &temp1);
-            fscanf(file2, "%d\n", &temp2);
-
-            if (temp1 > temp2)
-                counter1++;
-            else if (temp1 < temp2)
-                counter2++;
-        }
-        close(file1);
-        close(file2);
-        printf("Counter 1 = %d, Counter 2 = %d\n", counter1, counter2);
-        char counter1Str[5], counter2Str[5];
-        sprintf(counter1Str, "%d", counter1);
-        sprintf(counter2Str, "%d", counter2);
-        char result[10];
-        strcat(result, counter1Str);
-        strcat(result, "-");
-        strcat(result, counter2Str);
-        if (write(pipe_write, result, strlen(result)) != -1)
-        {
-            printf("Message sent by referee: [%s]\n", result);
+            printf("Message received by referee: [%s]\n", message);
             fflush(stdout);
+            char *token = strtok(message, "-");
+            strcpy(File1Name, token);
+            token = strtok(NULL, "-");
+            strcpy(File2Name, token);
+            file1 = fopen(File1Name, "r");
+            file2 = fopen(File2Name, "r");
+            if (file1 == NULL || file2 == NULL)
+            {
+                perror("Can't open a file!");
+                return;
+            }
+            int temp1, temp2;
+            int counter1 = 0;
+            int counter2 = 0;
+            for (int i = 0; i < 10; i++)
+            {
+                fscanf(file1, "%d\n", &temp1);
+                fscanf(file2, "%d\n", &temp2);
+                if (temp1 > temp2)
+                    counter1++;
+                else if (temp1 < temp2)
+                    counter2++;
+            }
+            close(file1);
+            close(file2);
+            printf("Counter 1 = %d, Counter 2 = %d\n", counter1, counter2);
+            char counter1Str[5], counter2Str[5];
+            sprintf(counter1Str, "%d", counter1);
+            sprintf(counter2Str, "%d", counter2);
+            char result[10];
+            strcat(result, counter1Str);
+            strcat(result, "-");
+            strcat(result, counter2Str);
+            sleep(2);
+            if (write(pipe_write, result, strlen(result)) != -1)
+            {
+                printf("Message sent by referee: [%s]\n", result);
+                fflush(stdout);
+
+                if (remove(File1Name) == 0 && remove(File2Name) == 0)
+                    printf("The file is deleted successfully.");
+                else
+                    printf("The file is not deleted.");
+            }
+            else
+            {
+                perror("Write");
+                exit(2);
+            }
         }
         else
         {
-            perror("Write");
-            exit(2);
+            perror("Read");
+            exit(1);
         }
     }
-    else
-    {
-        perror("Read");
-        exit(1);
-    }
-
     return 0;
 }
