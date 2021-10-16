@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
             if (remove(File2Name) == -1)
                 printf("The file 2 is not deleted.\n");
 
-            sleep(2);
+            
 
             // Write result on pipe to the parent
             if (write(pipe_write, result, strlen(result)) != -1)

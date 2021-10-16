@@ -4,7 +4,7 @@
 */
 
 #include "local.h"
-#define WIN_SCORE 50 
+#define WIN_SCORE 3
 
 //System calls for functions used to work with signals
 void signal_catcher_children(int);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     //Keep going until at least one of the 2 children score reach 50
     while (BigScore1 < WIN_SCORE && BigScore2 < WIN_SCORE)
     {
-        sleep(2);
+        sleep(1);
 
         //Kill system call using SIGUSR1 signal to tell children to start work
         kill(pid_array[1], SIGUSR1);
@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
         if (ready == 2)
         {
             ready = 0; // reset counter which is responsible on ready state of the two children
-            sleep(2);
 
             // variable express name of the two text files that include random numbers
             char filenames[] = "child1.txt-child2.txt";
@@ -136,10 +135,12 @@ int main(int argc, char *argv[])
                     token = strtok(NULL, "-");
                     int score2 = atoi(token);
                     roundNum++;
-                    yellow();
-                    printf("\n        ### Round ( %d ) ###        \n", roundNum);
                     reset();
-                    printf("\nP1 score = %d   |    P2 score= %d\n\n", score1, score2);
+                    printf("_______________________________________________\n");
+                    yellow();
+                    printf("\n\t      ### Round ( %d ) ###        \n", roundNum);
+                    reset();
+                    printf("\n\tP1 score = %d   |    P2 score= %d\n\n", score1, score2);
                     fflush(stdout); // To be sure that message will not ignored
 
                     // Modify children scores in every round
@@ -155,7 +156,7 @@ int main(int argc, char *argv[])
                     }
                     //Show Bigscore at the end of each round
                     cyan();
-                    printf("BigScore1= %d   |   BigScore2= %d\n", BigScore1, BigScore2);
+                    printf("\tBigScore1= %d   |   BigScore2= %d\n", BigScore1, BigScore2);
                     fflush(stdout);
                 }
             }
@@ -178,17 +179,17 @@ int main(int argc, char *argv[])
     if (BigScore1 > BigScore2)
     {
         green();
-        printf("=========================   P1 Wins!    =========================\n\n");
+        printf("\n================   P1 Wins!    =================n\n");
     }
     else if (BigScore1 < BigScore2)
     {
         green();
-        printf("=========================   P2 Wins!    =========================\n\n");
+        printf("\n================   P2 Wins!    ================\n\n");
     }
     else
     {
         green();
-        printf("=========================   Draw!   =========================\n\n");
+        printf("\n================     Draw!     ================\n\n");
     }
     // Kill all children after end the game
     for (int i = 0; i < 3; i++)
