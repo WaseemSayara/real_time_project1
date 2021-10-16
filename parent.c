@@ -4,7 +4,7 @@
 */
 
 #include "local.h"
-#define WIN_SCORE 10 
+#define WIN_SCORE 50 
 
 //System calls for functions used to work with signals
 void signal_catcher_children(int);
