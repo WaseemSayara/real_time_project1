@@ -10,12 +10,21 @@ void signal_catcher_children(int);
 void signal_catcher(int);
 
 int ready = 0;
-
+int BigScore1 = 0;
+int BigScore2 = 0;
 int main(int argc, char *argv[])
 {
 
     int i, status;
     pid_t pid, pid_array[3];
+    int f_des[2];
+    static char message[BUFSIZ];
+
+    if (pipe(f_des) == -1)
+    {
+        perror("Pipe");
+        exit(2);
+    }
 
     if (sigset(SIGINT, signal_catcher_children) == SIG_ERR)
     {
@@ -45,7 +54,10 @@ int main(int argc, char *argv[])
         {
             if (i == 0)
             {
-                int x = execl("./referee", NULL, (char *)0);
+                char pipe_read[5], pipe_write[5];
+                sprintf(pipe_read, "%d", f_des[0]);
+                sprintf(pipe_write, "%d", f_des[1]);
+                int x = execl("./referee", pipe_read, pipe_write, (char *)0);
                 fflush(stdout);
                 pause();
             }
@@ -65,19 +77,54 @@ int main(int argc, char *argv[])
         }
     }
 
-    while ( 1 )
+    while (1)
     {
-        if ( ready == 2 ){
+        if (ready == 2)
+        {
             ready = 0;
             printf(" lets go to referee\n");
             fflush(stdout);
+            char filenames[] = "child1.txt-child2.txt";
+            if (write(f_des[1], filenames, strlen(filenames)) != -1)
+            {
+                printf("Message sent by parent: [%s]\n", filenames);
+                fflush(stdout);
+                sleep(1);
+                if (read(f_des[0], message, BUFSIZ) != -1)
+                {
+                    printf(message);
+                    char *token = strtok(message, "-");
+                    int score1 = atoi(token);
+                    token = strtok(NULL, "-");
+                    int score2 = atoi(token);
+
+                    if (score1 > score2)
+                        BigScore1++;
+                    else if (score1 < score2)
+                        BigScore2++;
+                    else
+                    {
+                        BigScore1++;
+                        BigScore2++;
+                    }
+
+                    
+
+                }
+            }
+            else
+            {
+                perror("Write");
+                exit(5);
+            }
+
             break;
         }
-        else{
+        else
+        {
             pause();
         }
     }
-    
 
     for (i = 0; i < 3; i++)
     {
