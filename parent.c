@@ -12,6 +12,7 @@ void signal_catcher(int);
 int ready = 0;
 int BigScore1 = 0;
 int BigScore2 = 0;
+    pid_t pid, pid_array[3];
 int main(int argc, char *argv[])
 {
 
@@ -77,14 +78,18 @@ int main(int argc, char *argv[])
         }
     }
 
-    while (BigScore1 < 50 && BigScore2 < 50)
+    while (BigScore1 < 5 && BigScore2 < 5)
     {
-        sleep(1);
+        sleep(2);
         kill(pid_array[1], SIGUSR1);
         kill(pid_array[2], SIGUSR1);
+        pause();
+        printf("ready = %d\n", ready);
+        fflush(stdout);
         if (ready == 2)
         {
             ready = 0;
+            sleep(2);
             printf(" lets go to referee\n");
             fflush(stdout);
             char filenames[] = "child1.txt-child2.txt";
@@ -96,10 +101,14 @@ int main(int argc, char *argv[])
                 if (read(f_des[0], message, BUFSIZ) != -1)
                 {
                     printf(message);
+                    printf("\n");
                     char *token = strtok(message, "-");
                     int score1 = atoi(token);
                     token = strtok(NULL, "-");
                     int score2 = atoi(token);
+
+                    printf("Score1= %d, Score2= %d\n", score1, score2);
+                    fflush(stdout);
 
                     if (score1 > score2)
                         BigScore1++;
@@ -111,6 +120,7 @@ int main(int argc, char *argv[])
                         BigScore2++;
                     }
                     printf("BigScore1= %d, BigScore2= %d\n", BigScore1, BigScore2);
+                    fflush(stdout);
                 }
             }
             else
@@ -132,23 +142,18 @@ int main(int argc, char *argv[])
     else
         printf("Draw!\n");
 
-    for (i = 0; i < 3; i++)
-    {
-        if (waitpid(pid_array[i], &status, 0) == pid_array[i])
-        {
-            printf("Process ID %d has terminated\t status = %d\n", pid_array[i], status);
-            fflush(stdout);
-        }
-    }
+    for (int i =0 ; i<3 ; i++)
+        kill(SIGKILL, pid_array[i]);
+
     return 0;
 }
 
 void signal_catcher_children(int the_sig)
 {
-    printf("SIGINT received\n");
+    printf("SIGINT received (child finished)\n");
     fflush(stdout);
 
-    ready++;
+    ready = 2;
 
     if (the_sig == SIGQUIT)
         exit(1);
@@ -159,6 +164,11 @@ void signal_catcher(int the_sig)
     printf("SIGQUIT received\n");
     fflush(stdout);
 
+    for (int i =0 ; i<3 ; i++)
+        kill(SIGKILL, pid_array[i]);
+
+    kill(SIGKILL, getpid());
+    
     if (the_sig == SIGQUIT)
         exit(1);
 }

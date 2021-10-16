@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
     t = time(NULL) * childNumber;
     srand(t);
 
+    printf("hello from child %d\n", childNumber);
+
     while (1)
     {
         pause();
@@ -37,8 +39,8 @@ int main(int argc, char *argv[])
             fprintf(ptr, "%d\n", (rand() % 100) + 1);
         }
 
-        close(ptr);
-        sleep(childNumber);
+        fclose(ptr);
+        // sleep(childNumber * 2);
         kill(getppid(), SIGINT);
     }
     return 0;
@@ -46,6 +48,6 @@ int main(int argc, char *argv[])
 
 void signal_catcher(int the_sig)
 {
-    printf("SIGUSR1 received\n");
+    printf("SIGUSR1 received (child %d start)\n", getpid());
     fflush(stdout);
 }
