@@ -13,17 +13,19 @@ int main(int argc, char *argv[])
     int i, childNumber;
     long timee;
 
-    // Time multiplied by child number used as seed to the random number which is always give new values
-    // Time always unique
+    // Time multiplied by child number used as seed to the random number which always gives a new values
+    // Time is always unique
     childNumber = atoi(argv[0]);
     timee = time(NULL) * childNumber;
     srand(timee);
 
-    // SIGUSR catcher
+    // SIGUSR1 catcher
     if (sigset(SIGUSR1, signal_catcher) == SIG_ERR)
     {
         perror("Sigset can not set SIGUSR1");
-        exit(SIGUSR1);
+
+        // Terminate the program and kill all procceses
+        kill(SIGQUIT, getppid());
     }
 
     /*
@@ -32,13 +34,14 @@ int main(int argc, char *argv[])
     */
     while (1)
     {
+        // Pause the child to wait for the parent signals to start working
         pause();
 
         // Concatenate file name using string methods
         char filename[30] = "./child";
         strcat(filename, argv[0]);
         strcat(filename, ".txt");
-        ptr = fopen(filename, "w+");
+        ptr = fopen(filename, "w");
 
         // Print 10 random numbers on the text file
         for (i = 0; i < 10; i++)
@@ -46,8 +49,11 @@ int main(int argc, char *argv[])
             fprintf(ptr, "%d\n", (rand() % 100) + 1);
         }
 
-        fclose(ptr); // Close file to save values
+        // Close file
+        fclose(ptr);
 
+        // Sleep a little to put a time space between the Signals from childs
+        sleep(childNumber - 1);
         kill(getppid(), SIGINT);
     }
     return 0;

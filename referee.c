@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 
     static char message[BUFSIZ];
     FILE *file1, *file2;
+
     // Define read(0) & write(1) pipe values
     int pipe_read = atoi(argv[0]);
     int pipe_write = atoi(argv[1]);
@@ -22,21 +23,23 @@ int main(int argc, char *argv[])
         // Read message which is contain names of the two files
         if (read(pipe_read, message, BUFSIZ) != -1)
         {
-            // Insert file1 name and file2 name in 2 variables
 
-            char File1Name[10], *File2Name;
-            char *token = strtok_r(message, "-", &File2Name);
-            strcpy(File1Name, message);
+            // Insert file1 name and file2 name in 2 variables
+            char file1Name[10], *file2Name;
+            char *token = strtok_r(message, "-", &file2Name);
+            strcpy(file1Name, message);
 
             // Open files to read
-            file1 = fopen(File1Name, "r");
-            file2 = fopen(File2Name, "r");
+            file1 = fopen(file1Name, "r");
+            file2 = fopen(file2Name, "r");
 
             // Failed in File process
             if (file1 == NULL || file2 == NULL)
             {
                 perror("Can't open a file!");
-                return 1;
+
+                // Terminate the program and kill all procceses
+                kill(SIGQUIT, getppid());
             }
 
             // Define temporary and counter vaiables
@@ -62,7 +65,7 @@ int main(int argc, char *argv[])
             sprintf(counter1Str, "%d", counter1);
             sprintf(counter2Str, "%d", counter2);
 
-            // concatenate result in one statment to send it to the parent
+            // Concatenate result in one statment to send it to the parent
             char result[10];
             strcat(result, counter1Str);
             strcat(result, "-");
@@ -70,26 +73,38 @@ int main(int argc, char *argv[])
 
             // Exceptions for deleting files process
             if (remove(message) == -1)
-                printf("The file 1 is not deleted.\n");
+            {
+                printf("File 1 is not deleted.\n");
 
-            if (remove(File2Name) == -1)
-                printf("The file 2 is not deleted.\n");
+                // Terminate the program and kill all procceses
+                kill(SIGQUIT, getppid());
+            }
 
-            
+            if (remove(file2Name) == -1)
+            {
+                printf("File 2 is not deleted.\n");
+
+                // Terminate the program and kill all procceses
+                kill(SIGQUIT, getppid());
+            }
 
             // Write result on pipe to the parent
             if (write(pipe_write, result, strlen(result)) != -1)
                 sleep(1);
+
             else
             {
                 perror("Write Error!");
-                exit(2);
+                // Terminate the program and kill all procceses
+                kill(SIGQUIT, getppid());
             }
         }
         else
         {
             perror("Read Error!");
-            exit(1);
+
+            // Terminate the program and kill all procceses
+            kill(SIGQUIT, getppid());
         }
     }
     return 0;

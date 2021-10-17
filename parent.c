@@ -6,26 +6,30 @@
 #include "local.h"
 #define WIN_SCORE 50
 
-//System calls for functions used to work with signals
+// System calls for functions used to work with signals
 void signal_catcher_children(int);
 void signal_catcher(int);
 
-//initialize variables
+// Initialize variables
 int ready = 0, BigScore1 = 0, BigScore2 = 0, roundNum = 0;
 pid_t pid, pid_array[3];
 
 int main(int argc, char *argv[])
 {
+    /*
+    * f-des exprsee read(0) & write(1) operations
+    * pid_array to store childern IDs
+    * message used in piping process with size equal to 8192
+    */
+    int i, status, f_des[2];
+    pid_t pid, pid_array[3];
+    static char message[BUFSIZ];
 
-    int i, status, f_des[2];     // f-des exprsee read(0) & write(1) operations
-    pid_t pid, pid_array[3];     // pid_array to store childern IDs
-    static char message[BUFSIZ]; //message used in piping process with size equal to 8192
-
-    //Pipe exception with perror message
+    // Pipe exception with perror message
     if (pipe(f_des) == -1)
     {
         perror("Pipe Error!");
-        exit(2);
+        exit(1);
     }
 
     /*
@@ -54,7 +58,7 @@ int main(int argc, char *argv[])
         if (pid == -1)
         {
             perror("failed to fork childs");
-            exit(-1);
+            exit(2);
         }
         // The process is a child
         else if (pid == 0)
@@ -71,29 +75,33 @@ int main(int argc, char *argv[])
                 int status = execl("./referee", pipe_read, pipe_write, (char *)0);
 
                 if (status == -1)
+                {
                     perror("Faild to execute ./referee!");
-
-               
+                    exit(3);
+                }
             }
 
             // Assign children processes
             else
             {
-                char child_num[3]; // Used to identified children ( 1 or 2)
+                // Used to identified children ( 1 or 2)
+                char child_num[3];
                 sprintf(child_num, "%d", i);
                 int status = execl("./child", child_num, (char *)0);
 
                 if (status == -1)
+                {
                     perror("Faild to execute ./child!");
-
-                
+                    exit(4);
+                }
             }
         }
 
         // Parent Case
         else
         {
-            pid_array[i] = pid; // save children pids
+            // save children pids
+            pid_array[i] = pid;
         }
     }
 
@@ -104,17 +112,32 @@ int main(int argc, char *argv[])
     //Keep going until at least one of the 2 children score reach 50
     while (BigScore1 < WIN_SCORE && BigScore2 < WIN_SCORE)
     {
+        // to give the childen enough time to do thier work
         sleep(1);
 
-        //Kill system call using SIGUSR1 signal to tell children to start work
-        kill(pid_array[1], SIGUSR1);
-        kill(pid_array[2], SIGUSR1);
-
-        pause(); // waite until the two children end there works
-
-        if (ready == 2)
+        // none of the childs is working case
+        if (ready == 0)
         {
-            ready = 0; // reset counter which is responsible on ready state of the two children
+            //Kill system call using SIGUSR1 signal to tell children to start work
+            kill(pid_array[1], SIGUSR1);
+            kill(pid_array[2], SIGUSR1);
+
+            // waite until signal from child 1 is recived
+            pause();
+        }
+
+        // first child is ready but the second is not reay yet case
+        else if (ready == 1)
+        {
+            // waite until signal from child 2 is recived
+            pause();
+        }
+
+        // both childs are ready case
+        else if (ready == 2)
+        {
+            // reset counter which is responsible on ready state of the two children
+            ready = 0;
 
             // variable express name of the two text files that include random numbers
             char filenames[] = "child1.txt-child2.txt";
@@ -124,17 +147,21 @@ int main(int argc, char *argv[])
             */
             if (write(f_des[1], filenames, strlen(filenames)) != -1)
             {
-
+                // wait for the referee to read the pipe and writes the result
                 sleep(1);
 
+                // read the results of the round
                 if (read(f_des[0], message, BUFSIZ) != -1)
                 {
 
+                    // split the returned message and cast it into integers
                     char *token = strtok(message, "-");
                     int score1 = atoi(token);
                     token = strtok(NULL, "-");
                     int score2 = atoi(token);
                     roundNum++;
+
+                    // coloring and printing rounf result
                     reset();
                     printf("_______________________________________________\n");
                     yellow();
@@ -143,10 +170,11 @@ int main(int argc, char *argv[])
                     printf("\n\tP1 score = %d   |    P2 score= %d\n\n", score1, score2);
                     fflush(stdout); // To be sure that message will not ignored
 
+                    // increment the BigScores by the round result
                     BigScore1 += score1;
                     BigScore2 += score2;
 
-                    //Show Bigscore at the end of each round
+                    // Show Bigscore at the end of each round
                     cyan();
                     printf("\tBigScore1= %d   |   BigScore2= %d\n", BigScore1, BigScore2);
                     fflush(stdout);
@@ -158,10 +186,6 @@ int main(int argc, char *argv[])
                 perror("Write");
                 exit(5);
             }
-        }
-        else
-        {
-            pause();
         }
     }
 
@@ -183,6 +207,7 @@ int main(int argc, char *argv[])
         green();
         printf("\n================   P2 Wins!    =================n\n");
     }
+
     // Kill all children after end the game
     for (int i = 0; i < 3; i++)
         kill(SIGKILL, pid_array[i]);
@@ -197,10 +222,8 @@ int main(int argc, char *argv[])
 
 void signal_catcher_children(int the_sig)
 {
-    ready = 2;
-
-    if (the_sig == SIGQUIT)
-        exit(1);
+    // increment ready varuables meaning the number of ready childes has increased by 1
+    ready++;
 }
 
 /*
@@ -208,11 +231,10 @@ void signal_catcher_children(int the_sig)
 */
 void signal_catcher(int the_sig)
 {
+    // terminate all children in case any error occured
     for (int i = 0; i < 3; i++)
         kill(SIGKILL, pid_array[i]);
 
-    kill(SIGKILL, getpid()); // To kill parent
-
     if (the_sig == SIGQUIT)
-        exit(1);
+        exit(SIGQUIT);
 }
