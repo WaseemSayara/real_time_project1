@@ -4,7 +4,7 @@
 */
 
 #include "local.h"
-#define WIN_SCORE 3
+#define WIN_SCORE 50
 
 //System calls for functions used to work with signals
 void signal_catcher_children(int);
@@ -143,17 +143,9 @@ int main(int argc, char *argv[])
                     printf("\n\tP1 score = %d   |    P2 score= %d\n\n", score1, score2);
                     fflush(stdout); // To be sure that message will not ignored
 
-                    // Modify children scores in every round
-                    if (score1 > score2)
-                        BigScore1++;
-                    else if (score1 < score2)
-                        BigScore2++;
-                    // Equality case
-                    else
-                    {
-                        BigScore1++;
-                        BigScore2++;
-                    }
+                    BigScore1 += score1;
+                    BigScore2 += score2;
+
                     //Show Bigscore at the end of each round
                     cyan();
                     printf("\tBigScore1= %d   |   BigScore2= %d\n", BigScore1, BigScore2);
@@ -176,20 +168,20 @@ int main(int argc, char *argv[])
     /*
     * Compare BigScore for each child after at least one of them reach 50 to show the final result
     */
-    if (BigScore1 > BigScore2)
+    if (BigScore1 >= WIN_SCORE && BigScore2 >= WIN_SCORE)
     {
         green();
-        printf("\n================   P1 Wins!    =================n\n");
+        printf("\n================     Draw!     ================\n\n");
     }
-    else if (BigScore1 < BigScore2)
+    else if (BigScore1 >= WIN_SCORE)
     {
         green();
-        printf("\n================   P2 Wins!    ================\n\n");
+        printf("\n================   P1 Wins!    ================\n\n");
     }
     else
     {
         green();
-        printf("\n================     Draw!     ================\n\n");
+        printf("\n================   P2 Wins!    =================n\n");
     }
     // Kill all children after end the game
     for (int i = 0; i < 3; i++)
