@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
     else
     {
         green();
-        printf("\n================   P2 Wins!    =================n\n");
+        printf("\n================   P2 Wins!    =================\n\n");
     }
 
     // Kill all children after end the game
